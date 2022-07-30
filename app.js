@@ -2,7 +2,8 @@ const request = require('request');
 const express = require('express');
 const app = express();
 const { application } = require('express');
-
+var bodyParser = require('body-parser')
+app.use(bodyParser.urlencoded({ extended: true }));
 
 async function sendEmails(rateVal) {
     const fs = require('fs');
@@ -15,13 +16,13 @@ async function sendEmails(rateVal) {
     });
 
     const nodemailer = require("nodemailer");
-    
-    
+
+
     let transporter = nodemailer.createTransport({
-        service:"Gmail",
-        auth:{
-            user:"gses2.appemailsender@gmail.com",
-            pass:"txubvuzyvftjlqxr"
+        service: "Gmail",
+        auth: {
+            user: "gses2.appemailsender@gmail.com",
+            pass: "txubvuzyvftjlqxr"
         },
     });
 
@@ -36,6 +37,24 @@ async function sendEmails(rateVal) {
         });
     }
 }
+async function isNew(addingEmail) {
+    const fs = require('fs');
+    const readline = require('readline');
+    const fileStream = fs.createReadStream('emails.txt');
+
+    const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+    });
+
+    for await (const line of rl) {
+
+        if (line === addingEmail) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 app.get('/api/rate', (UserReq, UserRes) => {
 
@@ -47,7 +66,7 @@ app.get('/api/rate', (UserReq, UserRes) => {
 
 });
 app.post('/api/sendEmails', (UserReq, UserRes) => {
-    console.log("hi");
+
     request('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=uah', { json: true }, (err, MyRes, body) => {
         if (err) { UserRes.status(400).send(); }
         sendEmails(body.bitcoin.uah);
@@ -55,13 +74,21 @@ app.post('/api/sendEmails', (UserReq, UserRes) => {
         UserRes.status(200).send();
     });
 });
-app.get('/api/sendEmailZ', (UserReq, UserRes) => {
-    console.log("hi");
-    request('http://localhost:3000/api/sendEmails', { json: true }, (err, MyRes, body) => {
-        if (err) { UserRes.status(400).send(); }
 
+app.post('/api/subscribe', (UserReq, UserRes) => {
+    const fs = require('fs');
+    const emailAddress = UserReq.body.email;
+    console.log(typeof(emailAddress));
+    console.log(emailAddress);
+    if (isNew(emailAddress) === 0) {
+        UserRes.status(409).send();
+    } else {
+        fs.appendFile("emails.txt", emailAddress, function(error){
+            if(error) UserRes.status(400).send(); 
+                 
+        });
         UserRes.status(200).send();
-    });
+    }
 
 });
 
