@@ -83,7 +83,7 @@ app.post('/api/subscribe', (UserReq, UserRes) => {
     if (isNew(emailAddress) === 0) {
         UserRes.status(409).send();
     } else {
-        fs.appendFile("emails.txt", emailAddress, function(error){
+        fs.appendFile("emails.txt","\n"+ emailAddress, function(error){
             if(error) UserRes.status(400).send(); 
                  
         });
